@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -200,6 +201,12 @@ func (e *Explorer) Draw(screen tcell.Screen, x, y, h int) {
 	y++
 	h--
 
+	// Total line like ls -la
+	total := fmt.Sprintf(" total %d", len(e.Entries))
+	drawText(screen, x, y, e.Width, total, bgSt.Foreground(t.LineNumFG))
+	y++
+	h--
+
 	// Adjust scroll
 	if e.Sel < e.Scroll {
 		e.Scroll = e.Sel
@@ -216,17 +223,16 @@ func (e *Explorer) Draw(screen tcell.Screen, x, y, h int) {
 			continue
 		}
 		en := e.Entries[idx]
-		prefix := "  "
-		if en.IsDir {
-			prefix = "▸ "
+		name := en.Name
+		if en.IsDir && name != "." && name != ".." {
+			name += "/"
 		}
-		label := prefix + en.Name
-		if len(label) > e.Width {
-			label = label[:e.Width-1] + "…"
+		line := fmt.Sprintf("%s %s %8d %s", en.PermMode, en.ModTime, en.Size, name)
+		if len(line) > e.Width {
+			line = line[:e.Width-1] + "…"
 		}
-		// Pad
-		for len(label) < e.Width {
-			label += " "
+		for len(line) < e.Width {
+			line += " "
 		}
 		st := bgSt
 		if en.IsDir {
@@ -239,7 +245,7 @@ func (e *Explorer) Draw(screen tcell.Screen, x, y, h int) {
 				st = selSt
 			}
 		}
-		for cx, ch := range label {
+		for cx, ch := range line {
 			screen.SetContent(x+cx, y+row, ch, nil, st)
 		}
 	}

@@ -209,13 +209,6 @@ func (e *Editor) Draw() {
 	contentX := 0
 	contentW := w
 
-	if e.ShowExplorer {
-		ew := e.Explorer.Width
-		e.Explorer.Draw(screen, 0, contentY, contentH)
-		contentX = ew
-		contentW = w - ew
-	}
-
 	// Tab bar
 	e.drawTabBar(0, 0, w)
 
@@ -241,6 +234,7 @@ func (e *Editor) Draw() {
 }
 
 func (e *Editor) drawExplorerFullscreen(screen tcell.Screen, w, h int) {
+	e.Explorer.Width = w
 	t := CurrentTheme
 	statusH := 2
 	explorerH := h - statusH
@@ -255,7 +249,7 @@ func (e *Editor) drawExplorerFullscreen(screen tcell.Screen, w, h int) {
 
 	// Status bar
 	st := tcell.StyleDefault.Background(t.StatusBG).Foreground(t.StatusFG)
-	info := fmt.Sprintf(" Explorer • %s | d:delete | c:create | r:rename | Esc:close", e.Explorer.Dir)
+	info := fmt.Sprintf(" Explorer • %s | d:delete | c:create file | C:create dir | r:rename | Esc:close", e.Explorer.Dir)
 	drawText(screen, 0, h-1, w, info, st)
 
 	screen.Show()
