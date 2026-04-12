@@ -1,0 +1,32 @@
+# Python Syntax Highlighter
+name: Python
+files: *.py
+
+# Keywords
+rule: keyword | \b(def|class|if|elif|else|for|while|import|from|return|yield|lambda|with|as|try|except|finally|raise|assert|in|is|and|or|not|None|True|False|async|await|pass|break|continue|global|nonlocal)\b
+
+# Decorators
+rule: macro | @[a-zA-Z_]\w*
+
+# Strings
+rule: string | f?"(?:\\.|[^"\\])*"
+rule: string | f?'(?:\\.|[^'\\])*'
+rule: string | """[\s\S]*?"""
+rule: string | '''[\s\S]*?'''
+
+# Comments
+rule: comment | #.*$
+
+# Numbers
+rule: number | \b\d+(\.\d+)?\b
+rule: number | \b0x[0-9a-fA-F]+\b
+rule: number | \b0b[01]+\b
+
+# Built-in types
+rule: type | \b(int|str|float|bool|list|dict|tuple|set|bytes|bytearray)\b
+
+# Built-in functions
+rule: function | \b(print|len|range|enumerate|map|filter|zip|sorted|reversed|max|min|sum|all|any)\b
+
+# Operators
+rule: operator | [+\-*/%=<>!&|^~]
