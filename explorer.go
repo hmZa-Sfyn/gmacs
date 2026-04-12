@@ -10,8 +10,11 @@ import (
 )
 
 type ExplorerEntry struct {
-	Name  string
-	IsDir bool
+	Name     string
+	IsDir    bool
+	Size     int64
+	ModTime  string
+	PermMode string
 }
 
 type Explorer struct {
@@ -46,22 +49,40 @@ func (e *Explorer) Refresh() {
 		return
 	}
 	e.Entries = nil
-	// Dirs first, then files
+
+	// Add parent (..) and current (.) entries
+	if e.Dir != "/" {
+		e.Entries = append(e.Entries, ExplorerEntry{Name: "..", IsDir: true})
+	} else {
+		e.Entries = append(e.Entries, ExplorerEntry{Name: ".", IsDir: true})
+	}
+
 	var dirs, files []ExplorerEntry
 	for _, en := range entries {
 		nm := en.Name()
-		if strings.HasPrefix(nm, ".") {
-			continue // skip hidden
+		if strings.HasPrefix(nm, ".") && nm != "." && nm != ".." {
+			continue // skip hidden files
 		}
+		info, _ := en.Info()
+		var size int64 = 0
+		var modTime string = "-"
+		var permMode string = "-"
+		if info != nil {
+			size = info.Size()
+			modTime = info.ModTime().Format("2006-01-02")
+			permMode = info.Mode().String()
+		}
+		entry := ExplorerEntry{nm, en.IsDir(), size, modTime, permMode}
 		if en.IsDir() {
-			dirs = append(dirs, ExplorerEntry{nm, true})
+			dirs = append(dirs, entry)
 		} else {
-			files = append(files, ExplorerEntry{nm, false})
+			files = append(files, entry)
 		}
 	}
 	sort.Slice(dirs, func(i, j int) bool { return dirs[i].Name < dirs[j].Name })
 	sort.Slice(files, func(i, j int) bool { return files[i].Name < files[j].Name })
-	e.Entries = append(dirs, files...)
+	e.Entries = append(e.Entries, dirs...)
+	e.Entries = append(e.Entries, files...)
 }
 
 func (e *Explorer) MoveUp() {
@@ -91,7 +112,66 @@ func (e *Explorer) SelectedPath() string {
 	if e.Sel >= len(e.Entries) {
 		e.Sel = len(e.Entries) - 1
 	}
-	return filepath.Join(e.Dir, e.Entries[e.Sel].Name)
+	name := e.Entries[e.Sel].Name
+	if name == ".." {
+		return filepath.Dir(e.Dir)
+	}
+	if name == "." {
+		return e.Dir
+	}
+	return filepath.Join(e.Dir, name)
+}
+
+func (e *Explorer) DeleteSelected() error {
+	if len(e.Entries) == 0 || e.Sel >= len(e.Entries) {
+		return nil
+	}
+	name := e.Entries[e.Sel].Name
+	if name == ".." || name == "." {
+		return nil
+	}
+	path := filepath.Join(e.Dir, name)
+	err := os.RemoveAll(path)
+	if err == nil {
+		e.Refresh()
+	}
+	return err
+}
+
+func (e *Explorer) RenameSelected(newName string) error {
+	if len(e.Entries) == 0 || e.Sel >= len(e.Entries) {
+		return nil
+	}
+	oldName := e.Entries[e.Sel].Name
+	if oldName == ".." || oldName == "." {
+		return nil
+	}
+	old := filepath.Join(e.Dir, oldName)
+	new := filepath.Join(e.Dir, newName)
+	err := os.Rename(old, new)
+	if err == nil {
+		e.Refresh()
+	}
+	return err
+}
+
+func (e *Explorer) CreateFile(name string) error {
+	path := filepath.Join(e.Dir, name)
+	file, err := os.Create(path)
+	if err == nil {
+		file.Close()
+		e.Refresh()
+	}
+	return err
+}
+
+func (e *Explorer) CreateDir(name string) error {
+	path := filepath.Join(e.Dir, name)
+	err := os.Mkdir(path, 0755)
+	if err == nil {
+		e.Refresh()
+	}
+	return err
 }
 
 func (e *Explorer) SelectedIsDir() bool {

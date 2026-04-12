@@ -15,6 +15,12 @@ func (e *Editor) HandleKey(ev *tcell.EventKey) bool {
 		return e.handleFindKey(ev)
 	case ModeCommand:
 		return e.handleCommandKey(ev)
+	case ModeExplorerFullscreen:
+		return e.handleExplorerFullscreenKey(ev)
+	case ModeTerminalFullscreen:
+		return e.handleTerminalFullscreenKey(ev)
+	case ModeExplorerRename:
+		return e.handleExplorerRenameKey(ev)
 	}
 
 	if e.ShowExplorer {
@@ -85,10 +91,18 @@ func (e *Editor) handleBufferKey(ev *tcell.EventKey, b *Buffer) bool {
 			e.ModeInput = "replace "
 			return true
 		case tcell.KeyCtrlT:
-			e.ToggleTerminal()
+			if e.Mode == ModeTerminalFullscreen {
+				e.Mode = ModeNormal
+			} else {
+				e.Mode = ModeTerminalFullscreen
+			}
 			return true
 		case tcell.KeyCtrlE:
-			e.ShowExplorer = !e.ShowExplorer
+			if e.Mode == ModeExplorerFullscreen {
+				e.Mode = ModeNormal
+			} else {
+				e.Mode = ModeExplorerFullscreen
+			}
 			return true
 		case tcell.KeyCtrlO:
 			e.ShowExplorer = true
@@ -370,7 +384,12 @@ func (e *Editor) handleExplorerKey(ev *tcell.EventKey) bool {
 }
 
 func (e *Editor) handleTerminalKey(ev *tcell.EventKey, term *TermTab) bool {
-	switch ev.Key() {
+	mod := ev.Modifiers()
+	key := ev.Key()
+	ch := ev.Rune()
+	ctrl := mod&tcell.ModCtrl != 0
+
+	switch key {
 	case tcell.KeyCtrlT:
 		for i := len(e.Tabs) - 1; i >= 0; i-- {
 			if e.Tabs[i].Kind == TabBuffer {
@@ -403,7 +422,152 @@ func (e *Editor) handleTerminalKey(ev *tcell.EventKey, term *TermTab) bool {
 	case tcell.KeyCtrlD:
 		term.SendInput("\x04")
 	case tcell.KeyRune:
-		term.TypeRune(ev.Rune())
+		if !ctrl && (ch == ':' || ch == ';') {
+			e.Mode = ModeCommand
+			e.ModeInput = ""
+			return true
+		}
+		term.TypeRune(ch)
+	}
+	return true
+}
+
+func (e *Editor) handleExplorerFullscreenKey(ev *tcell.EventKey) bool {
+	key := ev.Key()
+	ch := ev.Rune()
+
+	switch key {
+	case tcell.KeyUp:
+		e.Explorer.MoveUp()
+		return true
+	case tcell.KeyDown:
+		e.Explorer.MoveDown()
+		return true
+	case tcell.KeyEscape:
+		e.Mode = ModeNormal
+		return true
+	case tcell.KeyEnter:
+		path := e.Explorer.SelectedPath()
+		if e.Explorer.SelectedIsDir() {
+			e.Explorer.SetDir(path)
+		} else {
+			e.OpenFile(path)
+			e.Mode = ModeNormal
+		}
+		return true
+	case tcell.KeyBackspace, tcell.KeyBackspace2:
+		e.Explorer.ParentDir()
+		return true
+	case tcell.KeyCtrlE:
+		e.Mode = ModeNormal
+		return true
+	case tcell.KeyRune:
+		switch ch {
+		case 'd':
+			err := e.Explorer.DeleteSelected()
+			if err != nil {
+				e.MsgLine = "Error: " + err.Error()
+			}
+			return true
+		case 'c':
+			e.Mode = ModeCommand
+			e.ModeInput = "newfile "
+			return true
+		case 'r':
+			if len(e.Explorer.Entries) > e.Explorer.Sel {
+				e.RenameInput = e.Explorer.Entries[e.Explorer.Sel].Name
+				e.Mode = ModeExplorerRename
+			}
+			return true
+		}
+	}
+	return false
+}
+
+func (e *Editor) handleTerminalFullscreenKey(ev *tcell.EventKey) bool {
+	mod := ev.Modifiers()
+	key := ev.Key()
+	ch := ev.Rune()
+	ctrl := mod&tcell.ModCtrl != 0
+
+	if tab := e.ActiveTab(); tab != nil && tab.Kind == TabTerminal {
+		switch key {
+		case tcell.KeyCtrlT:
+			e.Mode = ModeNormal
+			return true
+		case tcell.KeyEnter:
+			tab.Term.Submit()
+			return true
+		case tcell.KeyBackspace, tcell.KeyBackspace2:
+			tab.Term.Backspace()
+			return true
+		case tcell.KeyTab:
+			tab.Term.SendInput("\t")
+			return true
+		case tcell.KeyUp:
+			tab.Term.SendInput("\x1b[A")
+			return true
+		case tcell.KeyDown:
+			tab.Term.SendInput("\x1b[B")
+			return true
+		case tcell.KeyLeft:
+			tab.Term.SendInput("\x1b[D")
+			return true
+		case tcell.KeyRight:
+			tab.Term.SendInput("\x1b[C")
+			return true
+		case tcell.KeyDelete:
+			tab.Term.SendInput("\x1b[3~")
+			return true
+		case tcell.KeyHome:
+			tab.Term.SendInput("\x1b[H")
+			return true
+		case tcell.KeyEnd:
+			tab.Term.SendInput("\x1b[F")
+			return true
+		case tcell.KeyCtrlC:
+			tab.Term.SendInput("\x03")
+			return true
+		case tcell.KeyCtrlD:
+			tab.Term.SendInput("\x04")
+			return true
+		case tcell.KeyRune:
+			if !ctrl && (ch == ':' || ch == ';') {
+				e.Mode = ModeCommand
+				e.ModeInput = ""
+				return true
+			}
+			tab.Term.TypeRune(ch)
+			return true
+		}
+	}
+	return false
+}
+
+func (e *Editor) handleExplorerRenameKey(ev *tcell.EventKey) bool {
+	switch ev.Key() {
+	case tcell.KeyEscape:
+		e.Mode = ModeExplorerFullscreen
+		e.RenameInput = ""
+		return true
+	case tcell.KeyEnter:
+		if e.RenameInput != "" {
+			err := e.Explorer.RenameSelected(e.RenameInput)
+			if err != nil {
+				e.MsgLine = "Error: " + err.Error()
+			}
+		}
+		e.Mode = ModeExplorerFullscreen
+		e.RenameInput = ""
+		return true
+	case tcell.KeyBackspace, tcell.KeyBackspace2:
+		if len(e.RenameInput) > 0 {
+			e.RenameInput = e.RenameInput[:len(e.RenameInput)-1]
+		}
+		return true
+	case tcell.KeyRune:
+		e.RenameInput += string(ev.Rune())
+		return true
 	}
 	return true
 }

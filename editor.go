@@ -18,9 +18,9 @@ const (
 )
 
 type Tab struct {
-	Kind    TabKind
-	Buffer  *Buffer   // nil for terminal
-	Term    *TermTab  // nil for buffer
+	Kind   TabKind
+	Buffer *Buffer  // nil for terminal
+	Term   *TermTab // nil for buffer
 }
 
 func (tab *Tab) Name() string {
@@ -44,23 +44,27 @@ const (
 	ModeNormal EditorMode = iota
 	ModeFind
 	ModeCommand
+	ModeExplorerFullscreen
+	ModeTerminalFullscreen
+	ModeExplorerRename
 )
 
 type Editor struct {
-	Screen   tcell.Screen
-	Tabs     []*Tab
-	Active   int
+	Screen tcell.Screen
+	Tabs   []*Tab
+	Active int
 
 	Explorer     *Explorer
 	ShowExplorer bool
+	RenameInput  string
 
-	Mode       EditorMode
-	ModeInput  string   // text typed in find/command bar
-	FindStr    string
-	MsgLine    string   // status message
+	Mode      EditorMode
+	ModeInput string // text typed in find/command bar
+	FindStr   string
+	MsgLine   string // status message
 
 	// Selection drag start for shift-click
-	hlStates   map[int]*HLState // per-buffer highlight state cache
+	hlStates     map[int]*HLState // per-buffer highlight state cache
 	lineNumWidth int
 }
 
@@ -183,6 +187,16 @@ func (e *Editor) Draw() {
 		}
 	}
 
+	// Handle fullscreen modes
+	if e.Mode == ModeExplorerFullscreen {
+		e.drawExplorerFullscreen(screen, w, h)
+		return
+	}
+	if e.Mode == ModeTerminalFullscreen {
+		e.drawTerminalFullscreen(screen, w, h)
+		return
+	}
+
 	tabBarH := 1
 	statusH := 1
 	modeH := 0
@@ -222,6 +236,41 @@ func (e *Editor) Draw() {
 
 	// Status bar
 	e.drawStatusBar(0, h-statusH, w)
+
+	screen.Show()
+}
+
+func (e *Editor) drawExplorerFullscreen(screen tcell.Screen, w, h int) {
+	t := CurrentTheme
+	statusH := 2
+	explorerH := h - statusH
+	e.Explorer.Draw(screen, 0, 0, explorerH)
+
+	// Mode bar for rename
+	if e.Mode == ModeExplorerRename {
+		prompt := "Rename: " + e.RenameInput + "█"
+		st := tcell.StyleDefault.Background(t.TabActiveBG).Foreground(t.TabActiveFG)
+		drawText(screen, 0, h-2, w, prompt, st)
+	}
+
+	// Status bar
+	st := tcell.StyleDefault.Background(t.StatusBG).Foreground(t.StatusFG)
+	info := fmt.Sprintf(" Explorer • %s | d:delete | c:create | r:rename | Esc:close", e.Explorer.Dir)
+	drawText(screen, 0, h-1, w, info, st)
+
+	screen.Show()
+}
+
+func (e *Editor) drawTerminalFullscreen(screen tcell.Screen, w, h int) {
+	if tab := e.ActiveTab(); tab != nil && tab.Kind == TabTerminal {
+		tab.Term.Draw(screen, 0, 0, w, h-1)
+	}
+
+	// Status bar
+	t := CurrentTheme
+	st := tcell.StyleDefault.Background(t.StatusBG).Foreground(t.StatusFG)
+	info := " Terminal | Ctrl+T/E:toggle | Shift+;:palette | Ctrl+C:kill"
+	drawText(screen, 0, h-1, w, info, st)
 
 	screen.Show()
 }
