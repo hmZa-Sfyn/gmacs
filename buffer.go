@@ -13,10 +13,10 @@ const (
 )
 
 type Edit struct {
-	Kind   int
-	Row    int
-	Col    int
-	Text   string
+	Kind int
+	Row  int
+	Col  int
+	Text string
 }
 
 type Buffer struct {
@@ -225,9 +225,29 @@ func (b *Buffer) HasSelection() bool {
 	return b.SelRow >= 0
 }
 
+func (b *Buffer) clampPosition(row, col int) (int, int) {
+	if row < 0 {
+		row = 0
+	}
+	if row >= len(b.Lines) {
+		row = len(b.Lines) - 1
+	}
+	if row < 0 {
+		return 0, 0
+	}
+	if col < 0 {
+		col = 0
+	}
+	lineLen := len(b.Lines[row])
+	if col > lineLen {
+		col = lineLen
+	}
+	return row, col
+}
+
 func (b *Buffer) SelectionBounds() (r1, c1, r2, c2 int) {
-	r1, c1 = b.SelRow, b.SelCol
-	r2, c2 = b.CurRow, b.CurCol
+	r1, c1 = b.clampPosition(b.SelRow, b.SelCol)
+	r2, c2 = b.clampPosition(b.CurRow, b.CurCol)
 	if r1 > r2 || (r1 == r2 && c1 > c2) {
 		r1, c1, r2, c2 = r2, c2, r1, c1
 	}
@@ -271,6 +291,11 @@ func (b *Buffer) DeleteSelection() {
 }
 
 func (b *Buffer) deleteRange(r1, c1, r2, c2 int) {
+	r1, c1 = b.clampPosition(r1, c1)
+	r2, c2 = b.clampPosition(r2, c2)
+	if r1 > r2 || (r1 == r2 && c1 >= c2) {
+		return
+	}
 	if r1 == r2 {
 		line := b.Lines[r1]
 		b.Lines[r1] = append(line[:c1], line[c2:]...)

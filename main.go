@@ -1,10 +1,10 @@
 package main
 
 import (
-	"fmt"
-	"os"
-
-	"github.com/gdamore/tcell/v2"
+	 "fmt"
+		"os"
+		
+		"github.com/gdamore/tcell/v2"
 )
 
 func main() {
@@ -31,7 +31,7 @@ func main() {
 			ed.OpenFile(f)
 		}
 	} else {
-		ed.NewBuffer("*scratch*")
+		ed.NewBuffer("*empty*")
 	}
 
 	ed.Run()

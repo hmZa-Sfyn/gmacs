@@ -1,10 +1,10 @@
 package main
 
 import (
-	"bufio"
 	"io"
 	"os"
 	"os/exec"
+	"runtime"
 	"strings"
 	"time"
 
@@ -30,12 +30,9 @@ func NewTermTab() *TermTab {
 }
 
 func (t *TermTab) startShell() {
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		shell = "/bin/sh"
-	}
-	t.Cmd = exec.Command(shell, "-i")
-	t.Cmd.Env = append(os.Environ(), "TERM=dumb")
+	shell, args, env, promptCmd := t.getShellCommand()
+	t.Cmd = exec.Command(shell, args...)
+	t.Cmd.Env = append(os.Environ(), append(env, "TERM=xterm-256color", "INPUTRC=/dev/null")...)
 
 	stdin, err := t.Cmd.StdinPipe()
 	if err != nil {
@@ -64,23 +61,88 @@ func (t *TermTab) startShell() {
 	go t.readOutput(stdout)
 	go t.readOutput(stderr)
 
-	go func() {
-		time.Sleep(200 * time.Millisecond)
-		if t.Stdin != nil {
-			t.Stdin.Write([]byte("unsetopt correct\n"))
-			t.Stdin.Write([]byte("export PS1='\\u@\\h \\w $ '\n"))
+	if promptCmd != "" {
+		go func() {
+			time.Sleep(100 * time.Millisecond)
+			if t.Stdin != nil {
+				io.WriteString(t.Stdin, promptCmd+"\n")
+			}
+		}()
+	}
+}
+
+func (t *TermTab) getShellCommand() (string, []string, []string, string) {
+	if runtime.GOOS == "windows" {
+		cmdPath := os.Getenv("ComSpec")
+		if cmdPath == "" {
+			cmdPath = "cmd.exe"
 		}
-	}()
+		return cmdPath, []string{"/Q", "/K", "prompt $P$G"}, nil, ""
+	}
+
+	shell := os.Getenv("SHELL")
+	if shell == "" {
+		if _, err := os.Stat("/bin/bash"); err == nil {
+			shell = "/bin/bash"
+		} else {
+			shell = "/bin/sh"
+		}
+	}
+
+	var args []string
+	env := []string{}
+	promptCmd := "export PS1='gmacs> '"
+
+	if strings.HasSuffix(shell, "bash") {
+		args = []string{"--norc", "--noprofile", "-i"}
+	} else if strings.HasSuffix(shell, "zsh") {
+		args = []string{"-f", "-i"}
+		env = append(env, "ZDOTDIR=/tmp")
+	} else {
+		args = []string{"-i"}
+	}
+
+	return shell, args, env, promptCmd
 }
 
 func (t *TermTab) readOutput(r io.Reader) {
-	scanner := bufio.NewScanner(r)
-	for scanner.Scan() {
-		line := scanner.Text()
-		// Strip ANSI escape codes simply
-		line = stripAnsi(line)
-		t.appendLine(line)
+	buf := make([]byte, 1024)
+	var partial strings.Builder
+
+	for {
+		n, err := r.Read(buf)
+		if n > 0 {
+			chunk := stripAnsi(string(buf[:n]))
+			partial.WriteString(chunk)
+			for {
+				text := partial.String()
+				idx := strings.IndexByte(text, '\n')
+				if idx < 0 {
+					break
+				}
+				line := strings.TrimRight(text[:idx], "\r")
+				t.appendLine(line)
+				partial.Reset()
+				partial.WriteString(text[idx+1:])
+			}
+		}
+		if err != nil {
+			if err != io.EOF {
+				t.appendLine("Error: " + err.Error())
+			}
+			break
+		}
 	}
+	if partial.Len() > 0 {
+		t.appendLine(strings.TrimRight(partial.String(), "\r"))
+	}
+}
+
+func (t *TermTab) SendInput(text string) {
+	if t.Stdin == nil {
+		return
+	}
+	io.WriteString(t.Stdin, text)
 }
 
 func (t *TermTab) appendLine(line string) {
@@ -134,7 +196,7 @@ func (t *TermTab) Draw(screen tcell.Screen, x, y, w, h int) {
 		drawText(screen, x, y+row, w, t.Lines[idx], bgSt)
 	}
 	// Input line
-	prompt := "$ " + t.Input + "█"
+	prompt := t.Input + "█"
 	drawText(screen, x, y+visible, w, prompt, promptSt)
 }
 

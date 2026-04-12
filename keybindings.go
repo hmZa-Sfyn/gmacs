@@ -276,7 +276,13 @@ func (e *Editor) handleBufferKey(ev *tcell.EventKey, b *Buffer) bool {
 		e.ModeInput = ""
 	case tcell.KeyRune:
 		if !ctrl && !alt {
-			b.InsertRune(ch)
+			switch ch {
+			case ':', ';':
+				e.Mode = ModeCommand
+				e.ModeInput = ""
+			default:
+				b.InsertRune(ch)
+			}
 		}
 	}
 	return true
@@ -376,6 +382,26 @@ func (e *Editor) handleTerminalKey(ev *tcell.EventKey, term *TermTab) bool {
 		term.Submit()
 	case tcell.KeyBackspace, tcell.KeyBackspace2:
 		term.Backspace()
+	case tcell.KeyTab:
+		term.SendInput("\t")
+	case tcell.KeyUp:
+		term.SendInput("\x1b[A")
+	case tcell.KeyDown:
+		term.SendInput("\x1b[B")
+	case tcell.KeyLeft:
+		term.SendInput("\x1b[D")
+	case tcell.KeyRight:
+		term.SendInput("\x1b[C")
+	case tcell.KeyDelete:
+		term.SendInput("\x1b[3~")
+	case tcell.KeyHome:
+		term.SendInput("\x1b[H")
+	case tcell.KeyEnd:
+		term.SendInput("\x1b[F")
+	case tcell.KeyCtrlC:
+		term.SendInput("\x03")
+	case tcell.KeyCtrlD:
+		term.SendInput("\x04")
 	case tcell.KeyRune:
 		term.TypeRune(ev.Rune())
 	}
