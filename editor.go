@@ -562,6 +562,22 @@ func (e *Editor) ExecuteCommand(cmd string) {
 			n := b.ReplaceAll(parts[1], parts[2])
 			e.MsgLine = fmt.Sprintf("Replaced %d occurrences", n)
 		}
+	case "newfile":
+		if len(parts) > 1 {
+			if err := e.Explorer.CreateFile(parts[1]); err != nil {
+				e.MsgLine = "Error: " + err.Error()
+			} else {
+				e.MsgLine = "Created file: " + parts[1]
+			}
+		}
+	case "mkdir":
+		if len(parts) > 1 {
+			if err := e.Explorer.CreateDir(parts[1]); err != nil {
+				e.MsgLine = "Error: " + err.Error()
+			} else {
+				e.MsgLine = "Created dir: " + parts[1]
+			}
+		}
 	case "q", "quit":
 		os.Exit(0)
 	case "w", "write":
