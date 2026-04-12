@@ -1,0 +1,33 @@
+# Custom Dark Theme
+name: custom_dark
+
+# UI Colors
+bg: rgb(30, 30, 35)
+fg: rgb(200, 200, 200)
+status-bg: rgb(37, 99, 235)
+status-fg: rgb(255, 255, 255)
+tab-active-bg: rgb(50, 50, 55)
+tab-active-fg: rgb(255, 255, 255)
+tab-bg: rgb(40, 40, 40)
+tab-fg: rgb(150, 150, 150)
+linenum-fg: rgb(80, 80, 100)
+cursor-line-bg: rgb(40, 40, 50)
+select-bg: rgb(50, 100, 150)
+select-fg: rgb(255, 255, 255)
+
+# Syntax Colors
+keyword: rgb(102, 194, 255)
+string: rgb(230, 150, 100)
+comment: rgb(120, 160, 100)
+number: rgb(200, 220, 180)
+type: rgb(100, 220, 200)
+function: rgb(240, 240, 180)
+operator: rgb(210, 210, 210)
+macro: rgb(220, 150, 220)
+constant: rgb(120, 220, 220)
+
+# Explorer Colors
+explorer-bg: rgb(35, 35, 40)
+explorer-fg: rgb(210, 210, 210)
+explorer-sel-bg: rgb(60, 100, 160)
+explorer-dir-fg: rgb(102, 194, 255)

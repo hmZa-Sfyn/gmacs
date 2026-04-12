@@ -1,0 +1,24 @@
+# TypeScript/JavaScript Syntax Highlighter
+name: TypeScript
+files: *.ts,*.tsx,*.js,*.jsx
+
+# Keywords
+rule: keyword | \b(function|const|let|var|return|if|else|for|while|class|interface|type|async|await|import|export|default|new|this|super|extends|implements|public|private|protected|static|readonly)\b
+
+# Strings and Templates
+rule: string | "(?:\\.|[^"\\])*"
+rule: string | '(?:\\.|[^'\\])*'
+rule: string | `(?:\\.|[^`\\])*`
+
+# Comments
+rule: comment | //.*$
+rule: comment | /\*[\s\S]*?\*/
+
+# Numbers
+rule: number | \b\d+(\.\d+)?\b
+
+# Decorators
+rule: macro | @\w+
+
+# JSX/TSX tags
+rule: keyword | </?[A-Za-z]\w*

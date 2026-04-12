@@ -1,10 +1,11 @@
 package main
 
 import (
-	 "fmt"
-		"os"
-		
-		"github.com/gdamore/tcell/v2"
+	"fmt"
+	"os"
+	"path/filepath"
+
+	"github.com/gdamore/tcell/v2"
 )
 
 func main() {
@@ -22,6 +23,15 @@ func main() {
 	screen.SetStyle(tcell.StyleDefault)
 	screen.EnableMouse()
 	screen.Clear()
+
+	// Load custom syntax and theme files
+	exePath, _ := os.Executable()
+	exeDir := filepath.Dir(exePath)
+	syntaxDir := filepath.Join(exeDir, "syntax")
+	themesDir := filepath.Join(exeDir, "themes")
+
+	LoadSyntaxFiles(syntaxDir)
+	LoadThemeFiles(themesDir)
 
 	ed := NewEditor(screen)
 
