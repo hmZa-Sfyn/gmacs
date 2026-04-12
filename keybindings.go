@@ -473,6 +473,10 @@ func (e *Editor) handleExplorerFullscreenKey(ev *tcell.EventKey) bool {
 			e.Mode = ModeCommand
 			e.ModeInput = "newfile "
 			return true
+		case 'C':
+			e.Mode = ModeCommand
+			e.ModeInput = "mkdir "
+			return true
 		case 'r':
 			if len(e.Explorer.Entries) > e.Explorer.Sel {
 				e.RenameInput = e.Explorer.Entries[e.Explorer.Sel].Name
