@@ -306,8 +306,10 @@ func (b *Buffer) deleteRange(r1, c1, r2, c2 int) {
 	merged := make([]rune, len(head)+len(tail))
 	copy(merged, head)
 	copy(merged[len(head):], tail)
-	b.Lines = append(b.Lines[:r1], b.Lines[r2+1:]...)
-	b.Lines[r1] = merged
+	prefix := b.Lines[:r1]
+	suffix := b.Lines[r2+1:]
+	b.Lines = append(prefix, merged)
+	b.Lines = append(b.Lines, suffix...)
 }
 
 func (b *Buffer) InsertRune(r rune) {
@@ -420,6 +422,7 @@ func (b *Buffer) InsertText(text string) {
 	}
 	b.pushUndo(Edit{EditInsert, b.CurRow, b.CurCol, text})
 	b.insertRaw(text)
+	b.DesiredCol = b.CurCol
 	b.Dirty = true
 	b.RedoStack = nil
 }

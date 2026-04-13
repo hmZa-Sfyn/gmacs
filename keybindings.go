@@ -319,7 +319,7 @@ func (e *Editor) handleBufferKey(ev *tcell.EventKey, b *Buffer) bool {
 		e.Mode = ModeNormal
 		e.ModeInput = ""
 	case tcell.KeyRune:
-		if ctrl && alt {
+		if !ctrl && alt {
 			switch ch {
 			case ';', ':':
 				e.Mode = ModeCommand
