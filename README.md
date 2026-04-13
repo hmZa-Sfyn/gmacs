@@ -19,7 +19,7 @@ go build .
 - **Syntax highlighting** — Go, Python, C/C++, Shell, JSON, Markdown
 - **Themes** — dark (default), light, monokai, gruvbox
 - **File explorer** panel
-- **Embedded terminal** tab (runs your $SHELL)
+- **Embedded terminal** split pane (runs your $SHELL) alongside files and explorer
 - **Find** / **replace** (whole-buffer)
 - **Undo / Redo**
 - **Mouse support** — click to place cursor, scroll wheel, click tabs
@@ -50,7 +50,7 @@ go build .
 | Ctrl+S | Save |
 | Ctrl+F | Find |
 | Ctrl+H | Replace (command: `replace <find> <replace>`) |
-| Ctrl+T | Toggle terminal tab |
+| Ctrl+T | Toggle terminal split pane |
 | Ctrl+E | Toggle file explorer |
 | Alt+E | Open explorer in current file's dir |
 | Ctrl+O | Open explorer |
