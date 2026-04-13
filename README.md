@@ -57,7 +57,7 @@ go build .
 | Ctrl+N / Ctrl+P | Next / Prev tab |
 | Ctrl+W | Close tab |
 | Alt+1–9, 0 | Jump to tab 1–10 |
-| Ctrl+Alt+: | Command palette |
+| Alt+: | Command palette |
 | Escape | Cancel / clear selection |
 
 ## Commands (Ctrl+: or Ctrl+H)
