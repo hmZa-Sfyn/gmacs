@@ -172,17 +172,45 @@ func (e *Editor) handleBufferKey(ev *tcell.EventKey, b *Buffer) bool {
 	if alt {
 		switch key {
 		case tcell.KeyUp:
+			if shift {
+				if !b.HasSelection() {
+					b.StartSelection()
+				}
+			} else {
+				b.ClearSelection()
+			}
 			b.MoveLineUp()
 			return true
 		case tcell.KeyDown:
+			if shift {
+				if !b.HasSelection() {
+					b.StartSelection()
+				}
+			} else {
+				b.ClearSelection()
+			}
 			b.MoveLineDown()
 			return true
 		case tcell.KeyLeft:
+			if shift {
+				if !b.HasSelection() {
+					b.StartSelection()
+				}
+			} else {
+				b.ClearSelection()
+			}
 			for i := 0; i < 10; i++ {
 				b.MoveLeft()
 			}
 			return true
 		case tcell.KeyRight:
+			if shift {
+				if !b.HasSelection() {
+					b.StartSelection()
+				}
+			} else {
+				b.ClearSelection()
+			}
 			for i := 0; i < 10; i++ {
 				b.MoveRight()
 			}
