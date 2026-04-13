@@ -244,8 +244,21 @@ func (e *Editor) Draw() {
 	contentX := 0
 	contentW := w
 
+	if e.ShowExplorer {
+		e.Explorer.Width = 28
+		contentX = e.Explorer.Width
+		contentW = w - e.Explorer.Width
+	}
+
 	// Tab bar
 	e.drawTabBar(0, 0, w)
+
+	// Left explorer panel
+	if e.ShowExplorer {
+		if contentW > 0 {
+			e.Explorer.Draw(screen, 0, contentY, contentH)
+		}
+	}
 
 	// Content
 	tab := e.ActiveTab()
