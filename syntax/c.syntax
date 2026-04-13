@@ -1,0 +1,27 @@
+# C Syntax Highlighter
+name: C
+files: *.c,*.h
+
+# Keywords
+rule: keyword | \b(auto|break|case|char|const|continue|default|do|double|else|enum|extern|float|for|goto|if|int|long|register|return|short|signed|sizeof|static|struct|switch|typedef|union|unsigned|void|volatile|while)\b
+
+# Includes
+rule: macro | #include\s*<[^>]+>
+rule: macro | #define\s+\w+
+
+# Strings
+rule: string | "(?:\\.|[^"\\])*"
+
+# Comments
+rule: comment | //.*$
+rule: comment | /\*[\s\S]*?\*/
+
+# Numbers
+rule: number | \b\d+(\.\d+)?\b
+rule: number | \b0x[0-9a-fA-F]+\b
+
+# Types
+rule: type | \b(size_t|FILE|NULL)\b
+
+# Operators
+rule: operator | [+\-*/%=<>!&|^~]

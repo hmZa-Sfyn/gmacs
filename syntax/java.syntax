@@ -1,0 +1,23 @@
+# Java Syntax Highlighter
+name: Java
+files: *.java
+
+# Keywords
+rule: keyword | \b(public|private|protected|static|final|abstract|class|interface|extends|implements|import|package|if|else|for|while|do|switch|case|default|try|catch|finally|throw|return|break|continue|new|this|super|instanceof|void|int|long|short|byte|char|float|double|boolean|String|Object)\b
+
+# Strings
+rule: string | "(?:\\.|[^"\\])*"
+
+# Comments
+rule: comment | //.*$
+rule: comment | /\*[\s\S]*?\*/
+
+# Numbers
+rule: number | \b\d+(\.\d+)?\b
+rule: number | \b0x[0-9a-fA-F]+\b
+
+# Types
+rule: type | \b[A-Z][a-zA-Z0-9_]*\b
+
+# Operators
+rule: operator | [+\-*/%=<>!&|^~]

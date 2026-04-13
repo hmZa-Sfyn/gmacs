@@ -1,0 +1,25 @@
+# JavaScript Syntax Highlighter
+name: JavaScript
+files: *.js,*.jsx,*.ts,*.tsx
+
+# Keywords
+rule: keyword | \b(function|const|let|var|if|else|for|while|do|switch|case|default|try|catch|finally|throw|return|break|continue|class|extends|super|this|new|typeof|instanceof|in|of|async|await|import|export|from|as|default)\b
+
+# Strings
+rule: string | "(?:\\.|[^"\\])*"
+rule: string | '(?:\\.|[^'\\])*'
+rule: string | `[\s\S]*?`
+
+# Comments
+rule: comment | //.*$
+rule: comment | /\*[\s\S]*?\*/
+
+# Numbers
+rule: number | \b\d+(\.\d+)?\b
+rule: number | \b0x[0-9a-fA-F]+\b
+
+# Built-in objects
+rule: type | \b(Array|Object|String|Number|Boolean|Math|Date|RegExp|Promise|Set|Map|WeakMap|WeakSet)\b
+
+# Operators
+rule: operator | [+\-*/%=<>!&|^~]
