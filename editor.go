@@ -54,9 +54,11 @@ type Editor struct {
 	Tabs   []*Tab
 	Active int
 
-	Explorer     *Explorer
-	ShowExplorer bool
-	RenameInput  string
+	Explorer        *Explorer
+	ShowExplorer    bool
+	ShowTerminal    bool
+	TerminalFocused bool
+	RenameInput     string
 
 	Mode      EditorMode
 	ModeInput string // text typed in find/command bar
@@ -124,19 +126,6 @@ func (e *Editor) CloseTab(idx int) {
 	}
 }
 
-func (e *Editor) ToggleTerminal() {
-	for i, tab := range e.Tabs {
-		if tab.Kind == TabTerminal {
-			e.Active = i
-			return
-		}
-	}
-	term := NewTermTab()
-	tab := &Tab{Kind: TabTerminal, Term: term}
-	e.Tabs = append(e.Tabs, tab)
-	e.Active = len(e.Tabs) - 1
-}
-
 func (e *Editor) ActiveTab() *Tab {
 	if len(e.Tabs) == 0 {
 		return nil
@@ -152,6 +141,52 @@ func (e *Editor) ActiveBuffer() *Buffer {
 	return tab.Buffer
 }
 
+func (e *Editor) ActiveTerminal() *TermTab {
+	for _, tab := range e.Tabs {
+		if tab.Kind == TabTerminal {
+			return tab.Term
+		}
+	}
+	return nil
+}
+
+func (e *Editor) ensureTerminal() *TermTab {
+	if term := e.ActiveTerminal(); term != nil {
+		return term
+	}
+	term := NewTermTab()
+	tab := &Tab{Kind: TabTerminal, Term: term}
+	e.Tabs = append(e.Tabs, tab)
+	return term
+}
+
+func (e *Editor) ToggleTerminal() {
+	if !e.ShowTerminal {
+		e.ensureTerminal()
+		e.ShowTerminal = true
+		e.TerminalFocused = true
+		return
+	}
+	if e.TerminalFocused {
+		e.TerminalFocused = false
+	} else {
+		e.TerminalFocused = true
+	}
+}
+
+/*
+func (e *Editor) ToggleTerminal() {
+	for i, tab := range e.Tabs {
+		if tab.Kind == TabTerminal {
+			e.Active = i
+			return
+		}
+	}
+	term := NewTermTab()
+	tab := &Tab{Kind: TabTerminal, Term: term}
+	e.Tabs = append(e.Tabs, tab)
+	e.Active = len(e.Tabs) - 1
+}*/
 // ---- Main loop ----
 
 func (e *Editor) Run() {
@@ -215,10 +250,28 @@ func (e *Editor) Draw() {
 	// Content
 	tab := e.ActiveTab()
 	if tab != nil {
-		if tab.Kind == TabBuffer {
-			e.drawBuffer(tab.Buffer, contentX, contentY, contentW, contentH)
-		} else if tab.Kind == TabTerminal {
-			tab.Term.Draw(screen, contentX, contentY, contentW, contentH)
+		if e.ShowTerminal && tab.Kind == TabBuffer {
+			term := e.ActiveTerminal()
+			termHeight := contentH / 3
+			if termHeight < 5 {
+				termHeight = 5
+			}
+			if termHeight > contentH-1 {
+				termHeight = contentH - 1
+			}
+			bufferHeight := contentH - termHeight
+			if bufferHeight > 0 {
+				e.drawBuffer(tab.Buffer, contentX, contentY, contentW, bufferHeight)
+			}
+			if term != nil {
+				term.Draw(screen, contentX, contentY+bufferHeight, contentW, termHeight)
+			}
+		} else {
+			if tab.Kind == TabBuffer {
+				e.drawBuffer(tab.Buffer, contentX, contentY, contentW, contentH)
+			} else if tab.Kind == TabTerminal {
+				tab.Term.Draw(screen, contentX, contentY, contentW, contentH)
+			}
 		}
 	}
 
