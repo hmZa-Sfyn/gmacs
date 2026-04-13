@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"os"
 	"strings"
 	"unicode"
@@ -50,16 +51,22 @@ func NewBuffer(name string) *Buffer {
 }
 
 func NewBufferFromFile(path string) (*Buffer, error) {
-	data, err := os.ReadFile(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
 	}
+	defer file.Close()
+
 	b := NewBuffer(shortName(path))
 	b.FilePath = path
-	raw := strings.Split(strings.ReplaceAll(string(data), "\r\n", "\n"), "\n")
-	b.Lines = make([][]rune, len(raw))
-	for i, l := range raw {
-		b.Lines[i] = []rune(l)
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		line := strings.ReplaceAll(scanner.Text(), "\r", "")
+		b.Lines = append(b.Lines, []rune(line))
+	}
+	if err := scanner.Err(); err != nil {
+		return nil, err
 	}
 	if len(b.Lines) == 0 {
 		b.Lines = [][]rune{{}}

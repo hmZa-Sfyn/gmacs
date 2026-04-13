@@ -4,7 +4,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"runtime"
 	"strings"
 	"time"
 
@@ -72,36 +71,10 @@ func (t *TermTab) startShell() {
 }
 
 func (t *TermTab) getShellCommand() (string, []string, []string, string) {
-	if runtime.GOOS == "windows" {
-		cmdPath := os.Getenv("ComSpec")
-		if cmdPath == "" {
-			cmdPath = "cmd.exe"
-		}
-		return cmdPath, []string{"/Q", "/K", "prompt $P$G"}, nil, ""
-	}
-
-	shell := os.Getenv("SHELL")
-	if shell == "" {
-		if _, err := os.Stat("/bin/bash"); err == nil {
-			shell = "/bin/bash"
-		} else {
-			shell = "/bin/sh"
-		}
-	}
-
-	var args []string
+	shell := "bash"
+	args := []string{"--norc", "--noprofile"}
 	env := []string{}
-	promptCmd := "export PS1='gmacs> '"
-
-	if strings.HasSuffix(shell, "bash") {
-		args = []string{"--norc", "--noprofile", "-i"}
-	} else if strings.HasSuffix(shell, "zsh") {
-		args = []string{"-f", "-i"}
-		env = append(env, "ZDOTDIR=/tmp")
-	} else {
-		args = []string{"-i"}
-	}
-
+	promptCmd := "export PS1='$ '"
 	return shell, args, env, promptCmd
 }
 
