@@ -319,15 +319,16 @@ func (e *Editor) handleBufferKey(ev *tcell.EventKey, b *Buffer) bool {
 		e.Mode = ModeNormal
 		e.ModeInput = ""
 	case tcell.KeyRune:
-		if !ctrl && !alt {
+		if ctrl && alt {
 			switch ch {
-			case ':', ';':
+			case ';', ':':
 				e.Mode = ModeCommand
 				e.ModeInput = ""
 			default:
 				b.InsertRune(ch)
 			}
 		}
+		b.InsertRune(ch)
 	}
 	return true
 }

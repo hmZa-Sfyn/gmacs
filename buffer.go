@@ -339,8 +339,9 @@ func (b *Buffer) InsertNewline() {
 
 	// Auto-indent
 	indent := leadingSpaces(b.Lines[b.CurRow])
+	inserted := "\n" + string(indent)
 
-	b.pushUndo(Edit{EditInsert, b.CurRow, b.CurCol, "\n"})
+	b.pushUndo(Edit{EditInsert, b.CurRow, b.CurCol, inserted})
 	b.Lines[b.CurRow] = head
 	newLine := append(indent, tail...)
 	after := make([][]rune, len(b.Lines)+1)
@@ -410,13 +411,17 @@ func (b *Buffer) DeleteForward() {
 }
 
 func (b *Buffer) InsertText(text string) {
-	for _, r := range text {
-		if r == '\n' {
-			b.InsertNewline()
-		} else {
-			b.InsertRune(r)
-		}
+	text = strings.ReplaceAll(text, "\r\n", "\n")
+	if b.HasSelection() {
+		b.DeleteSelection()
 	}
+	if text == "" {
+		return
+	}
+	b.pushUndo(Edit{EditInsert, b.CurRow, b.CurCol, text})
+	b.insertRaw(text)
+	b.Dirty = true
+	b.RedoStack = nil
 }
 
 // MoveLineUp swaps current line with previous
