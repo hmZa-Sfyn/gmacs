@@ -54,11 +54,9 @@ type Editor struct {
 	Tabs   []*Tab
 	Active int
 
-	Explorer        *Explorer
-	ShowExplorer    bool
-	ShowTerminal    bool
-	TerminalFocused bool
-	RenameInput     string
+	Explorer     *Explorer
+	ShowExplorer bool
+	RenameInput  string
 
 	Mode      EditorMode
 	ModeInput string // text typed in find/command bar
@@ -150,28 +148,17 @@ func (e *Editor) ActiveTerminal() *TermTab {
 	return nil
 }
 
-func (e *Editor) ensureTerminal() *TermTab {
-	if term := e.ActiveTerminal(); term != nil {
-		return term
+func (e *Editor) ToggleTerminal() {
+	for i, tab := range e.Tabs {
+		if tab.Kind == TabTerminal {
+			e.Active = i
+			return
+		}
 	}
 	term := NewTermTab()
 	tab := &Tab{Kind: TabTerminal, Term: term}
 	e.Tabs = append(e.Tabs, tab)
-	return term
-}
-
-func (e *Editor) ToggleTerminal() {
-	if !e.ShowTerminal {
-		e.ensureTerminal()
-		e.ShowTerminal = true
-		e.TerminalFocused = true
-		return
-	}
-	if e.TerminalFocused {
-		e.TerminalFocused = false
-	} else {
-		e.TerminalFocused = true
-	}
+	e.Active = len(e.Tabs) - 1
 }
 
 /*
@@ -263,28 +250,10 @@ func (e *Editor) Draw() {
 	// Content
 	tab := e.ActiveTab()
 	if tab != nil {
-		if e.ShowTerminal && tab.Kind == TabBuffer {
-			term := e.ActiveTerminal()
-			termHeight := contentH / 3
-			if termHeight < 5 {
-				termHeight = 5
-			}
-			if termHeight > contentH-1 {
-				termHeight = contentH - 1
-			}
-			bufferHeight := contentH - termHeight
-			if bufferHeight > 0 {
-				e.drawBuffer(tab.Buffer, contentX, contentY, contentW, bufferHeight)
-			}
-			if term != nil {
-				term.Draw(screen, contentX, contentY+bufferHeight, contentW, termHeight)
-			}
-		} else {
-			if tab.Kind == TabBuffer {
-				e.drawBuffer(tab.Buffer, contentX, contentY, contentW, contentH)
-			} else if tab.Kind == TabTerminal {
-				tab.Term.Draw(screen, contentX, contentY, contentW, contentH)
-			}
+		if tab.Kind == TabBuffer {
+			e.drawBuffer(tab.Buffer, contentX, contentY, contentW, contentH)
+		} else if tab.Kind == TabTerminal {
+			tab.Term.Draw(screen, contentX, contentY, contentW, contentH)
 		}
 	}
 

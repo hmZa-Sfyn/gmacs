@@ -29,12 +29,6 @@ func (e *Editor) HandleKey(ev *tcell.EventKey) bool {
 		}
 	}
 
-	if e.ShowTerminal && e.TerminalFocused && e.Mode == ModeNormal {
-		if term := e.ActiveTerminal(); term != nil {
-			return e.handleTerminalKey(ev, term)
-		}
-	}
-
 	tab := e.ActiveTab()
 	if tab == nil {
 		return true
@@ -422,10 +416,6 @@ func (e *Editor) handleTerminalKey(ev *tcell.EventKey, term *TermTab) bool {
 
 	switch key {
 	case tcell.KeyCtrlT:
-		if e.ShowTerminal {
-			e.TerminalFocused = false
-			return true
-		}
 		for i := len(e.Tabs) - 1; i >= 0; i-- {
 			if e.Tabs[i].Kind == TabBuffer {
 				e.Active = i

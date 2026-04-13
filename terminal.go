@@ -72,7 +72,7 @@ func (t *TermTab) startShell() {
 
 func (t *TermTab) getShellCommand() (string, []string, []string, string) {
 	shell := "bash"
-	args := []string{"--norc", "--noprofile"}
+	args := []string{"--norc", "--noprofile", "-i"}
 	env := []string{}
 	promptCmd := "export PS1='$ '"
 	return shell, args, env, promptCmd
